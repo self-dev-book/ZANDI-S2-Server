@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const axios = require("axios");
 const crypto = require("crypto");
+const { OAuthApp } = require("@octokit/oauth-app");
 
 const keys = require("./keys.json");
 
@@ -11,6 +12,7 @@ const http_port = process.env.PORT || 8080;
 let state_token = {};
 
 const responseMessage = (res, is_success, message) => {
+	console.log(`responseMessage: ${is_success}, ${message}`);
 	res.json({
 		result: is_success ? 1 : 0,
 		message: message
@@ -91,6 +93,30 @@ app.get('/token', (req, res) => {
 	} else {
 		responseMessage(res, true, token);
 	}
+});
+app.delete('/token/:token', (req, res) => {
+	let token = req.params.token;
+
+	if (!token) {
+		return responseMessage(res, false, 'Token not provided.');
+	}
+
+	(new OAuthApp({
+		clientId: keys.github_client_id,
+		clientSecret: keys.github_client_secret
+	}))
+	.octokit
+	.request(`DELETE /applications/${keys.github_client_id}/grant`, {
+		access_token: token
+	})
+	.then(response => {
+		console.log(response.data);
+		responseMessage(res, true, response.data);
+	})
+	.catch(err => {
+		console.log(err);
+		responseMessage(res, false, 'Failed to delete an access-token.');
+	});
 });
 
 http.createServer(app).listen(http_port);
