@@ -21,7 +21,6 @@ const responseMessage = (res, is_success, message) => {
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static('public'));
 
 app.get('/github_login', (req, res) => {
 	let state = req.query.state;
